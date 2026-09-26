@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="ory-verify" content="PASTE_TRACKRECORD_TOKEN_HERE">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="A prediction agent's record you can check yourself. Each call is a hold invoice the agent cannot settle unless a grader releases the secret, so getting paid is the proof.">
+<meta name="twitter:creator" content="@faruukku">
+<link rel="me" href="https://x.com/faruukku">
+<link rel="icon" href="/logo.png">
+<meta property="og:title" content="Trackrecord — a prediction record nobody can pad">
+<meta property="og:description" content="The agent cannot settle its own invoice. A grader releases the secret only when the call was right, so payment is the proof.">
+<title>Trackrecord — a prediction record nobody can pad</title>
+<style>
+  :root{
+    color-scheme:dark;
+    --bg:#0b1110; --panel:#121917; --line:#1f2a27; --line2:#18211f;
+    --ink:#e4ece9; --mut:#7b8a86;
+    --lime:#a3e635; --rose:#fb7185; --cy:#22d3ee; --ok:#4ade80;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);padding:0 20px;
+    font:15px/1.62 ui-sans-serif,-apple-system,"Segoe UI",Roboto,sans-serif}
+  .wrap{max-width:960px;margin:0 auto;padding-block:44px 80px}
+  header{border-bottom:1px solid var(--line);padding-bottom:20px;margin-bottom:24px}
+  h1{font-size:30px;margin:0 0 5px;letter-spacing:-.02em}
+  h1 span{color:var(--lime)}
+  .sub{color:var(--mut);margin:0}
+  h2{font-size:11.5px;text-transform:uppercase;letter-spacing:.14em;color:var(--mut);
+     margin:34px 0 10px;font-family:ui-monospace,Menlo,monospace}
+  h2 b{color:var(--lime);font-weight:700}
+  p{margin:0 0 12px}
+  .lede{font-size:17px}
+  .note{color:var(--mut);font-size:13px}
+  code,.m{font-family:ui-monospace,Menlo,monospace;font-size:12.5px}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px;margin-bottom:12px}
+  button{font:inherit;font-size:14px;padding:9px 16px;border-radius:6px;cursor:pointer;
+    background:var(--lime);color:#10180a;border:none;font-weight:700}
+  button:hover{filter:brightness(1.08)}
+  button.g{background:transparent;color:var(--cy);border:1px solid var(--line);font-weight:400}
+  button.d{background:transparent;color:var(--rose);border:1px solid #3a2730;font-weight:400}
+  button:disabled{opacity:.34;cursor:not-allowed}
+  .row{display:flex;gap:9px;flex-wrap:wrap;align-items:center}
+  .out{margin-top:13px;padding:13px;background:#080d0c;border:1px solid var(--line2);
+    border-radius:7px;font-family:ui-monospace,Menlo,monospace;font-size:12.5px;word-break:break-all}
+  .k{color:var(--mut);font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px}
+  .v{margin-bottom:11px}.v:last-child{margin-bottom:0}
+  table{width:100%;border-collapse:collapse;font-size:12.5px;font-family:ui-monospace,Menlo,monospace}
+  th,td{text-align:left;padding:7px 9px;border-bottom:1px solid var(--line2);white-space:nowrap}
+  th{color:var(--mut);font-size:10px;text-transform:uppercase;letter-spacing:.08em;font-weight:600;
+     font-family:ui-sans-serif,-apple-system,sans-serif}
+  tr.win td{color:var(--ok)}
+  tr.loss td{color:var(--mut)}
+  tr.fake td{color:var(--rose)}
+  .pill{display:inline-block;font-size:11px;padding:2px 9px;border-radius:20px;
+    border:1px solid var(--line);white-space:nowrap}
+  .pill.ok{border-color:var(--ok);color:var(--ok);background:rgba(74,222,128,.1)}
+  .pill.no{border-color:var(--rose);color:var(--rose);background:rgba(251,113,133,.1)}
+  .pill.wait{border-color:var(--line);color:var(--mut)}
+  .stat{display:flex;gap:26px;flex-wrap:wrap;margin:4px 0 2px}
+  .stat div span{display:block;font-size:10px;color:var(--mut);text-transform:uppercase;letter-spacing:.08em}
+  .stat div b{font-size:21px;font-family:ui-monospace,Menlo,monospace;font-weight:600}
+  .err{background:rgba(251,113,133,.09);border:1px solid #452a32;color:#ffc6cf;
+    border-radius:7px;padding:11px;font-size:13.5px;margin-top:11px}
+  .scroll{overflow-x:auto}
+  footer{margin-top:48px;padding-top:18px;border-top:1px solid var(--line);color:var(--mut);font-size:13.5px}
+  a{color:var(--cy)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>Track<span>record</span></h1>
+  <p class="sub">A prediction agent's record that nobody, including the agent, can pad.</p>
+</header>
+
+<p class="lede">
+  Every forecasting agent advertises a hit rate, and none of them can be checked. Losses get
+  quietly dropped, wins get backfilled, and calls that were never made appear afterwards. The
+  record is written by the party it flatters.
+</p>
+<p class="note">
+  A hold invoice inverts that. The grader picks a secret and gives the agent only its hash, so
+  the agent issues an invoice it cannot settle. The grader releases the secret only for calls
+  that turned out right. Getting paid therefore <em>is</em> the proof, and every settled invoice
+  leaves behind a preimage anyone can check against the hash. Everything here runs in this tab:
+  real signed testnet BOLT-11 invoices and SHA-256 proofs. No server, no node, no wallet.
+</p>
+
+<h2><b>1</b> · The agent makes its calls</h2>
+<p class="note">
+  Each call gets an invoice whose payment hash comes from the grader. The agent never sees the
+  preimage behind it, so none of these can be settled yet.
+</p>
+<div class="panel">
+  <div class="row"><button id="call">Make eight calls</button> <span class="note" id="round"></span></div>
+  <div id="callOut"></div>
+</div>
+
+<h2><b>2</b> · The markets resolve</h2>
+<p class="note">
+  The grader checks each call against what happened, and releases the secret for the ones that
+  were right. It does nothing at all for the others — there is no punishment step, just an
+  absence.
+</p>
+<div class="panel">
+  <div class="row"><button id="resolve" disabled>Resolve and release</button></div>
+  <div id="resOut"></div>
+</div>
+
+<h2><b>3</b> · The record, checked by you rather than claimed by the agent</h2>
+<p class="note">
+  Every row below is verified here, in your browser, by hashing the preimage and comparing it
+  with the invoice's payment hash. Nothing is taken on trust.
+</p>
+<div class="panel">
+  <div class="row"><button class="g" id="audit" disabled>Verify every receipt</button></div>
+  <div id="auditOut"></div>
+</div>
+
+<h2><b>4</b> · The agent pads its record</h2>
+<p class="note">
+  Now the agent adds a win it never earned, and invents the receipt to go with it. The same audit
+  runs again.
+</p>
+<div class="panel">
+  <div class="row"><button class="d" id="pad" disabled>Add a fabricated win</button></div>
+  <div id="padOut"></div>
+</div>
+
+<h2>What is actually being trusted</h2>
+<p>
+  The grader, to judge outcomes honestly. Nothing else, and notably not the agent. The agent
+  cannot mint a receipt for a call it got wrong, because settling requires a preimage only the
+  grader holds, and inverting SHA-256 is not an option. It cannot delete a loss either, because a
+  loss is simply an invoice with no preimage, and its absence is as visible as a win's presence.
+  A reader checks the whole record without asking anyone.
+</p>
+<p class="note" id="scope">
+  Implemented: hold-invoice semantics where the payment hash is supplied by a third party,
+  BOLT-11 invoice construction on testnet with a real recoverable signature, preimage-to-hash
+  verification of every receipt, and an audit that anyone can re-run. Not implemented: routing or
+  settling a real Lightning payment, HTLC timeouts and refunds, and the grader's own
+  accountability, which here is assumed. No node is contacted and no payment is made, so this
+  page cannot move a satoshi on any network.
+</p>
+
+<footer>
+  <p><a href="https://github.com/Leihyn/trackrecord">Source</a> · <a href="https://x.com/faruukku">@faruukku</a></p>
+  <p class="note">Demonstration keys, generated in your browser. Nothing is transmitted anywhere.</p>
+</footer>
+
+</div>
+
+<script type="module">
+import * as S from './secp256k1.js';
+const $=s=>document.getElementById(s);
+const te=new TextEncoder(), tdd=new TextDecoder();
+const b2h=b=>[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("");
+const h2b=h=>Uint8Array.from(h.match(/../g).map(x=>parseInt(x,16)));
+const cat=(...a)=>{const t=new Uint8Array(a.reduce((n,x)=>n+x.length,0));let o=0;for(const x of a){t.set(x,o);o+=x.length;}return t;};
+const sha=async b=>new Uint8Array(await crypto.subtle.digest("SHA-256",b));
+const hmac=async(k,...m)=>{const key=await crypto.subtle.importKey("raw",k,{name:"HMAC",hash:"SHA-256"},false,["sign"]);
+  return new Uint8Array(await crypto.subtle.sign("HMAC",key,cat(...m)));};
+S.etc.hmacSha256Async=hmac;
+S.etc.sha256Async=async(...m)=>sha(cat(...m));
+const rnd=n=>{const b=new Uint8Array(n);crypto.getRandomValues(b);return b;};
+const cut=(s,n=18)=>s.length>n?s.slice(0,n)+"…":s;
+const esc=s=>String(s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+
+// ---- bech32 + BOLT-11 ----
+const CH="qpzry9x8gf2tvdw0s3jn54khce6mua7l";
+const GEN=[0x3b6a57b2,0x26508e6d,0x1ea119fa,0x3d4233dd,0x2a1462b3];
+const pm=v=>{let c=1;for(const d of v){const b=c>>25;c=((c&0x1ffffff)<<5)^d;for(let i=0;i<5;i++)if((b>>i)&1)c^=GEN[i];}return c;};
+const hrpX=h=>{const r=[];for(let i=0;i<h.length;i++)r.push(h.charCodeAt(i)>>5);r.push(0);for(let i=0;i<h.length;i++)r.push(h.charCodeAt(i)&31);return r;};
+const bech32=(hrp,w)=>{const chk=pm([...hrpX(hrp),...w,0,0,0,0,0,0])^1;const cs=[];
+  for(let i=0;i<6;i++)cs.push((chk>>(5*(5-i)))&31);
+  return hrp+"1"+[...w,...cs].map(x=>CH[x]).join("");};
+const conv=(d,from,to,pad)=>{let acc=0,bits=0;const out=[],max=(1<<to)-1;
+  for(const v of d){acc=(acc<<from)|v;bits+=from;while(bits>=to){bits-=to;out.push((acc>>bits)&max);}}
+  if(pad){if(bits)out.push((acc<<(to-bits))&max);} else if(bits>=from||((acc<<(to-bits))&max)) return null;
+  return out;};
+async function makeInvoice(priv,payHash,sats,desc){
+  const ts=Math.floor(Date.now()/1000), hrp="lntb"+(sats*10)+"n", w=[];
+  for(let i=6;i>=0;i--) w.push((ts>>(5*i))&31);
+  const push=(tag,d)=>{w.push(CH.indexOf(tag));w.push(Math.floor(d.length/32),d.length%32);w.push(...d);};
+  push("p",conv([...h2b(payHash)],8,5,true).slice(0,52));
+  push("d",conv([...te.encode(desc)],8,5,true));
+  const h=await sha(cat(te.encode(hrp),Uint8Array.from(conv(w,5,8,true))));
+  const sig=await S.signAsync(h,priv);
+  return bech32(hrp,[...w,...conv([...sig.toCompactRawBytes(),sig.recovery],8,5,true).slice(0,104)]);
+}
+
+const MARKETS=["BTC above 70k by Friday","ETH/BTC ratio falls this week","Fee market above 40 sat/vB",
+  "Difficulty adjusts upward","Mempool clears below 5 vMB","A block found under 3 minutes",
+  "Hashrate sets a new high","Next epoch lengthens"];
+const AGENT_PRIV=rnd(32);
+let CALLS=[], round=0, PADDED=null;
+
+$("call").onclick=async()=>{
+  try{
+    CALLS=[]; PADDED=null; round++;
+    for(let i=0;i<MARKETS.length;i++){
+      const preimage=rnd(32);                       // the GRADER holds this
+      const payHash=b2h(await sha(preimage));       // the agent only ever sees this
+      const inv=await makeInvoice(AGENT_PRIV,payHash,250,"trackrecord: "+MARKETS[i]);
+      CALLS.push({market:MARKETS[i],preimage,payHash,inv,
+        side:Math.random()<0.5?"YES":"NO", settled:false, released:null});
+    }
+    $("round").textContent="round "+round;
+    $("callOut").innerHTML=`<div class="scroll"><table>
+      <tr><th>#</th><th>Call</th><th>Side</th><th>Payment hash (from the grader)</th><th>Agent can settle?</th></tr>
+      ${CALLS.map((c,i)=>`<tr><td>${i+1}</td><td>${esc(c.market)}</td><td>${c.side}</td>
+        <td>${cut(c.payHash,24)}</td><td><span class="pill wait">no preimage</span></td></tr>`).join("")}
+    </table></div>
+    <div class="out" style="margin-top:12px">
+      <div class="k">One of the invoices, in full</div><div class="v">${CALLS[0].inv}</div>
+      <div class="k">Network</div><div class="v">testnet (lntb), 250 sats</div></div>
+    <p class="note" style="margin-top:10px">Eight real BOLT-11 invoices, each carrying a payment
+    hash the agent did not choose and cannot reverse. None is settleable.</p>`;
+    $("resolve").disabled=false; $("audit").disabled=true; $("pad").disabled=true;
+    $("resOut").innerHTML=""; $("auditOut").innerHTML=""; $("padOut").innerHTML="";
+  }catch(e){ $("callOut").innerHTML=`<div class="err">${esc(e.message)}</div>`; }
+};
+
+$("resolve").onclick=async()=>{
+  try{
+    for(const c of CALLS){
+      c.correct=Math.random()<0.5;
+      if(c.correct){ c.released=b2h(c.preimage); c.settled=true; }
+    }
+    const won=CALLS.filter(c=>c.settled).length;
+    $("resOut").innerHTML=`<div class="scroll"><table>
+      <tr><th>#</th><th>Call</th><th>Outcome</th><th>Grader released</th><th>Invoice</th></tr>
+      ${CALLS.map((c,i)=>`<tr class="${c.settled?"win":"loss"}"><td>${i+1}</td><td>${esc(c.market)}</td>
+        <td>${c.correct?"right":"wrong"}</td>
+        <td>${c.released?cut(c.released,22):"nothing"}</td>
+        <td><span class="pill ${c.settled?"ok":"wait"}">${c.settled?"settled":"never settles"}</span></td></tr>`).join("")}
+    </table></div>
+    <p class="note" style="margin-top:10px">${won} of ${CALLS.length} released. The unsettled rows
+    are not deleted and not marked as failures by anyone — they are simply invoices with no
+    preimage, which is what a wrong call looks like from the outside.</p>`;
+    $("audit").disabled=false;
+  }catch(e){ $("resOut").innerHTML=`<div class="err">${esc(e.message)}</div>`; }
+};
+
+async function auditRows(rows){
+  const out=[];
+  for(const r of rows){
+    let verdict;
+    if(!r.released) verdict={cls:"wait",txt:"no claim",ok:null};
+    else{
+      const h=b2h(await sha(h2b(r.released)));
+      const good=h===r.payHash;
+      verdict={cls:good?"ok":"no",txt:good?"verified":"does not hash",ok:good};
+    }
+    out.push({...r,verdict});
+  }
+  return out;
+}
+function renderAudit(rows,extra=""){
+  const claimed=rows.filter(r=>r.released).length;
+  const verified=rows.filter(r=>r.verdict.ok===true).length;
+  const bogus=rows.filter(r=>r.verdict.ok===false).length;
+  return `<div class="stat">
+      <div><span>claimed wins</span><b>${claimed}</b></div>
+      <div><span>verified</span><b style="color:var(--ok)">${verified}</b></div>
+      <div><span>unverifiable</span><b style="color:${bogus?"var(--rose)":"var(--mut)"}">${bogus}</b></div>
+      <div><span>hit rate you can prove</span><b>${Math.round(100*verified/rows.length)}%</b></div>
+    </div>
+    <div class="scroll" style="margin-top:10px"><table>
+      <tr><th>#</th><th>Call</th><th>Payment hash</th><th>Preimage presented</th><th>SHA-256 of it matches?</th></tr>
+      ${rows.map((r,i)=>`<tr class="${r.verdict.ok===false?"fake":r.verdict.ok?"win":"loss"}">
+        <td>${i+1}</td><td>${esc(r.market)}</td><td>${cut(r.payHash,20)}</td>
+        <td>${r.released?cut(r.released,20):"—"}</td>
+        <td><span class="pill ${r.verdict.cls}">${r.verdict.txt}</span></td></tr>`).join("")}
+    </table></div>${extra}`;
+}
+
+$("audit").onclick=async()=>{
+  try{
+    const rows=await auditRows(CALLS);
+    $("auditOut").innerHTML=renderAudit(rows,
+      `<p class="note" style="margin-top:10px">Every claimed win hashes to the payment hash on its
+      own invoice. The agent supplied none of these numbers and could not have produced them.</p>`);
+    $("pad").disabled=false;
+  }catch(e){ $("auditOut").innerHTML=`<div class="err">${esc(e.message)}</div>`; }
+};
+
+$("pad").onclick=async()=>{
+  try{
+    const loser=CALLS.find(c=>!c.settled);
+    if(!loser) throw new Error("This round happened to have no losing calls. Run it again.");
+    PADDED={...loser, released:b2h(rnd(32))};       // invented preimage
+    const rows=await auditRows(CALLS.map(c=>c===loser?PADDED:c));
+    const bogus=rows.filter(r=>r.verdict.ok===false).length;
+    $("padOut").innerHTML=renderAudit(rows,
+      `<p class="note" style="margin-top:10px">The agent claimed <b>${esc(loser.market)}</b> as a
+      win and attached a preimage it made up. Hashing it gives a different value from the payment
+      hash on that invoice, so the row is flagged and the provable hit rate does not move.
+      ${bogus===1?"Exactly one row failed, and it is the fabricated one.":""}</p>
+      <div class="out" style="margin-top:12px">
+        <div class="k">Payment hash on the invoice</div><div class="v">${loser.payHash}</div>
+        <div class="k">SHA-256 of the preimage the agent presented</div>
+        <div class="v" style="color:var(--rose)">${b2h(await sha(h2b(PADDED.released)))}</div></div>`);
+  }catch(e){ $("padOut").innerHTML=`<div class="err">${esc(e.message)}</div>`; }
+};
+
+if(new URLSearchParams(location.search).has("demo")){
+  await $("call").onclick();
+  let guard=0;
+  do{ await $("resolve").onclick(); guard++; }
+  while(CALLS.every(c=>c.settled) && guard<8);      // need at least one loss to pad
+  await $("audit").onclick(); await $("pad").onclick();
+}
+</script>
+</body>
+</html>
