@@ -20,20 +20,23 @@
   }
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--ink);padding:0 20px;
-    font:15px/1.62 ui-sans-serif,-apple-system,"Segoe UI",Roboto,sans-serif}
-  .wrap{max-width:960px;margin:0 auto;padding-block:44px 80px}
+    font:16px/1.68 ui-serif,Georgia,"Times New Roman",serif}
+  .wrap{max-width:1180px;margin:0 auto;padding-block:44px 80px}
   header{border-bottom:1px solid var(--line);padding-bottom:20px;margin-bottom:24px}
   h1{font-size:30px;margin:0 0 5px;letter-spacing:-.02em}
   h1 span{color:var(--lime)}
   .sub{color:var(--mut);margin:0}
-  h2{font-size:11.5px;text-transform:uppercase;letter-spacing:.14em;color:var(--mut);
-     margin:34px 0 10px;font-family:ui-monospace,Menlo,monospace}
-  h2 b{color:var(--lime);font-weight:700}
+  h2{font-size:12px;text-transform:uppercase;letter-spacing:.18em;color:var(--mut);
+     margin:40px 0 6px;font-family:ui-serif,Georgia,serif;font-weight:400;
+     display:flex;align-items:center;gap:14px}
+  h2::after{content:"";flex:1;height:1px;background:var(--line)}
+  h2 i{font-style:normal;color:var(--lime);font-variant:small-caps;letter-spacing:.1em}
   p{margin:0 0 12px}
-  .lede{font-size:17px}
-  .note{color:var(--mut);font-size:13px}
+  .lede{font-size:18px;line-height:1.6;max-width:62ch}
+  .note{color:var(--mut);font-size:14px;max-width:70ch}
   code,.m{font-family:ui-monospace,Menlo,monospace;font-size:12.5px}
-  .panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px;margin-bottom:12px}
+  .panel{background:transparent;border:0;border-top:1px solid var(--line);
+    border-radius:0;padding:16px 0 22px;margin:0}
   button{font:inherit;font-size:14px;padding:9px 16px;border-radius:6px;cursor:pointer;
     background:var(--lime);color:#10180a;border:none;font-weight:700}
   button:hover{filter:brightness(1.08)}
@@ -88,7 +91,7 @@
   real signed testnet BOLT-11 invoices and SHA-256 proofs. No server, no node, no wallet.
 </p>
 
-<h2><b>1</b> · The agent makes its calls</h2>
+<h2><i>sheet i</i> The calls, as filed</h2>
 <p class="note">
   Each call gets an invoice whose payment hash comes from the grader. The agent never sees the
   preimage behind it, so none of these can be settled yet.
@@ -98,7 +101,7 @@
   <div id="callOut"></div>
 </div>
 
-<h2><b>2</b> · The markets resolve</h2>
+<h2><i>sheet ii</i> Resolution</h2>
 <p class="note">
   The grader checks each call against what happened, and releases the secret for the ones that
   were right. It does nothing at all for the others — there is no punishment step, just an
@@ -109,7 +112,7 @@
   <div id="resOut"></div>
 </div>
 
-<h2><b>3</b> · The record, checked by you rather than claimed by the agent</h2>
+<h2><i>sheet iii</i> Audit, performed by the reader</h2>
 <p class="note">
   Every row below is verified here, in your browser, by hashing the preimage and comparing it
   with the invoice's payment hash. Nothing is taken on trust.
@@ -119,7 +122,7 @@
   <div id="auditOut"></div>
 </div>
 
-<h2><b>4</b> · The agent pads its record</h2>
+<h2><i>sheet iv</i> The padded row</h2>
 <p class="note">
   Now the agent adds a win it never earned, and invents the receipt to go with it. The same audit
   runs again.
@@ -129,13 +132,13 @@
   <div id="padOut"></div>
 </div>
 
-<h2>What is actually being trusted</h2>
+<h2><i>closing</i> Why you do not have to believe the agent</h2>
 <p>
-  The grader, to judge outcomes honestly. Nothing else, and notably not the agent. The agent
-  cannot mint a receipt for a call it got wrong, because settling requires a preimage only the
-  grader holds, and inverting SHA-256 is not an option. It cannot delete a loss either, because a
-  loss is simply an invoice with no preimage, and its absence is as visible as a win's presence.
-  A reader checks the whole record without asking anyone.
+  Because it cannot mint a receipt for a call it got wrong. Settling needs a preimage only the
+  grader holds, and SHA-256 does not run backwards. It cannot quietly drop a loss either, because
+  a loss is simply an invoice with no preimage, and an absence is as visible as a presence when
+  the record is the full set of invoices rather than a list the agent curates. The one party you
+  do have to trust is the grader, to judge outcomes honestly.
 </p>
 <p class="note" id="scope">
   Implemented: hold-invoice semantics where the payment hash is supplied by a third party,
@@ -148,7 +151,7 @@
 
 <footer>
   <p><a href="https://github.com/Leihyn/trackrecord">Source</a> · <a href="https://x.com/faruukku">@faruukku</a></p>
-  <p class="note">Demonstration keys, generated in your browser. Nothing is transmitted anywhere.</p>
+  <p class="note">Grader, agent and invoices are all local to this page.</p>
 </footer>
 
 </div>
